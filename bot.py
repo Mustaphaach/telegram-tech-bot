@@ -2,34 +2,44 @@ import requests
 from telegram import Bot
 from datetime import datetime
 import asyncio
-import time
 import xml.etree.ElementTree as ET
+import os
 
-TOKEN = "8640244328:AAEme0Ynla9S0dROqJNBs114x_Z_-XNlPF4"
+# 🔐 ناخدو التوكن من Render (ماشي من الكود)
+TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = 7267064983
 
 def get_tech_news():
-    url = "https://news.google.com/rss/search?q=technology"
-    response = requests.get(url)
-    
-    root = ET.fromstring(response.content)
-    items = root.findall(".//item")[:5]
+    try:
+        url = "https://news.google.com/rss/search?q=technology"
+        response = requests.get(url)
 
-    news_text = f"📰 Tech News - {datetime.now().strftime('%Y-%m-%d')}\n\n"
+        root = ET.fromstring(response.content)
+        items = root.findall(".//item")[:5]
 
-    for item in items:
-        title = item.find("title").text
-        link = item.find("link").text
-        news_text += f"🔹 {title}\n{link}\n\n"
+        news_text = f"📰 Tech News - {datetime.now().strftime('%Y-%m-%d')}\n\n"
 
-    return news_text
+        for item in items:
+            title = item.find("title").text
+            link = item.find("link").text
+            news_text += f"🔹 {title}\n{link}\n\n"
 
-async def send_news():
+        return news_text
+
+    except:
+        return "❌ وقع مشكل فـ جلب الأخبار"
+
+async def main():
     bot = Bot(token=TOKEN)
-    await bot.send_message(chat_id=CHAT_ID, text=get_tech_news())
 
-# loop كل 24 ساعة
-while True:
-    asyncio.run(send_news())
-    print("✅ News sent")
-    time.sleep(86400)  # 24h
+    while True:
+        try:
+            await bot.send_message(chat_id=CHAT_ID, text=get_tech_news())
+            print("✅ News sent")
+        except Exception as e:
+            print("❌ Error:", e)
+
+        await asyncio.sleep(86400)  # 24h
+
+# تشغيل البوت
+asyncio.run(main())
